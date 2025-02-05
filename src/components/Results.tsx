@@ -18,7 +18,7 @@ export const Results = ({ onRestart }: ResultsProps) => {
 
   const downloadWorksheet = () => {
     const content = results.map((r, i) => 
-      `Question ${i + 1}: ${r.question}\nAnswer: ${r.actualAnswer}\n\n`
+      `Question ${i + 1}: ${r.question}\nYour Answer: ${r.userAnswer}\nCorrect Answer: ${r.actualAnswer}\nResult: ${r.correct ? 'Correct' : 'Incorrect'}\n\n`
     ).join('');
     
     const blob = new Blob([content], { type: 'text/plain' });

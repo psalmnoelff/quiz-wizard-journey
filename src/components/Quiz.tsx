@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 import confetti from "canvas-confetti";
 
 interface QuizProps {
@@ -17,7 +18,6 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
-  const [isFlipped, setIsFlipped] = useState(false);
   const [timeLeft, setTimeLeft] = useState(settings.timeLimitSeconds);
   const [results, setResults] = useState<{ question: string; correct: boolean; userAnswer: string; actualAnswer: string }[]>([]);
 
@@ -45,9 +45,11 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
         spread: 70,
         origin: { y: 0.6 }
       });
+      toast.success("Correct answer!");
     } else {
       document.body.classList.add("shake");
       document.body.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+      toast.error(`Wrong answer! The correct answer is: ${currentQuestion.answer}`);
       setTimeout(() => {
         document.body.classList.remove("shake");
         document.body.style.backgroundColor = "";
@@ -62,15 +64,18 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
     }]);
 
     if (currentIndex < questions.length - 1) {
-      setIsFlipped(true);
       setTimeout(() => {
         setCurrentIndex(i => i + 1);
         setAnswer("");
-        setIsFlipped(false);
         setTimeLeft(settings.timeLimitSeconds);
       }, 1000);
     } else {
-      localStorage.setItem("quizResults", JSON.stringify(results));
+      localStorage.setItem("quizResults", JSON.stringify([...results, {
+        question: currentQuestion.question,
+        correct: isCorrect,
+        userAnswer: answer,
+        actualAnswer: currentQuestion.answer
+      }]));
       onComplete();
     }
   };
@@ -86,7 +91,7 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
         {settings.timeLimit && <span>Time: {timeLeft}s</span>}
       </div>
 
-      <Card className={`p-6 min-h-[200px] card-flip ${isFlipped ? "flipped" : ""}`}>
+      <Card className="p-6 min-h-[200px]">
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">{currentQuestion.question}</h3>
           {currentQuestion.imageRef && (
