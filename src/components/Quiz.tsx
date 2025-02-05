@@ -22,10 +22,30 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
   const [results, setResults] = useState<{ question: string; correct: boolean; userAnswer: string; actualAnswer: string }[]>([]);
 
   useEffect(() => {
+    // Clear previous results when starting new session
+    localStorage.removeItem("quizResults");
+    
     const storedQuestions = JSON.parse(localStorage.getItem("quizQuestions") || "[]");
-    const filteredQuestions = storedQuestions.filter((q: any) => q.difficulty === settings.difficulty);
-    const shuffled = [...filteredQuestions].sort(() => Math.random() - 0.5);
-    setQuestions(shuffled.slice(0, settings.questionCount));
+    const validQuestions = storedQuestions.filter((q: any) => {
+      const isValid = q.question && q.answer && q.difficulty === settings.difficulty;
+      if (!isValid) {
+        console.warn("Invalid question found:", q);
+      }
+      return isValid;
+    });
+    
+    if (validQuestions.length === 0) {
+      toast.error("No valid questions found for the selected difficulty!");
+      onComplete();
+      return;
+    }
+
+    if (validQuestions.length < settings.questionCount) {
+      toast.warning(`Only ${validQuestions.length} valid questions available. Adjusting quiz length.`);
+    }
+
+    const shuffled = [...validQuestions].sort(() => Math.random() - 0.5);
+    setQuestions(shuffled.slice(0, Math.min(settings.questionCount, validQuestions.length)));
   }, []);
 
   useEffect(() => {
@@ -38,7 +58,6 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
   const handleAnswer = () => {
     const currentQuestion = questions[currentIndex];
     
-    // Add guard clause to check if currentQuestion exists
     if (!currentQuestion || !currentQuestion.answer) {
       toast.error("Question or answer is missing!");
       return;
