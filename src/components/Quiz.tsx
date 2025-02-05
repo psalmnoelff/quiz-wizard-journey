@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface QuizProps {
   settings: {
@@ -12,14 +13,17 @@ interface QuizProps {
     timeLimitSeconds: number;
   };
   onComplete: () => void;
+  onBack: () => void;
 }
 
-export const Quiz = ({ settings, onComplete }: QuizProps) => {
+export const Quiz = ({ settings, onComplete, onBack }: QuizProps) => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [timeLeft, setTimeLeft] = useState(settings.timeLimitSeconds);
   const [results, setResults] = useState<{ question: string; correct: boolean; userAnswer: string; actualAnswer: string }[]>([]);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     // Clear previous results when starting new session
@@ -35,8 +39,8 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
     });
     
     if (validQuestions.length === 0) {
-      toast.error("No valid questions found for the selected difficulty!");
-      onComplete();
+      setErrorMessage("No valid questions found for the selected difficulty!");
+      setShowError(true);
       return;
     }
 
@@ -59,7 +63,8 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
     const currentQuestion = questions[currentIndex];
     
     if (!currentQuestion || !currentQuestion.answer) {
-      toast.error("Question or answer is missing!");
+      setErrorMessage("Question or answer is missing!");
+      setShowError(true);
       return;
     }
 
@@ -108,23 +113,37 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
     }
   };
 
-  if (questions.length === 0) return <div>Loading...</div>;
-
-  const currentQuestion = questions[currentIndex];
+  if (questions.length === 0 && !showError) return <div>Loading...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <AlertDialog open={showError} onOpenChange={(open) => {
+        setShowError(open);
+        if (!open) onBack();
+      }}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-destructive">
+              {errorMessage}
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex justify-between items-center mb-4">
-        <span>Question {currentIndex + 1}/{questions.length}</span>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={onBack}>Back</Button>
+          <span>Question {currentIndex + 1}/{questions.length}</span>
+        </div>
         {settings.timeLimit && <span>Time: {timeLeft}s</span>}
       </div>
 
       <Card className="p-6 min-h-[200px]">
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold">{currentQuestion.question}</h3>
-          {currentQuestion.imageRef && (
+          <h3 className="text-xl font-semibold">{questions[currentIndex]?.question}</h3>
+          {questions[currentIndex]?.imageRef && (
             <img 
-              src={currentQuestion.imageRef} 
+              src={questions[currentIndex].imageRef} 
               alt="Question reference"
               className="max-w-full h-auto rounded-md"
             />

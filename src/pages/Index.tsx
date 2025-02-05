@@ -42,6 +42,7 @@ const Index = () => {
           <Quiz
             settings={settings}
             onComplete={() => setGameState("results")}
+            onBack={() => setGameState("settings")}
           />
         )}
 

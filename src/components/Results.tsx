@@ -17,19 +17,39 @@ export const Results = ({ onRestart }: ResultsProps) => {
   const percentage = (correctCount / results.length) * 100;
 
   const downloadWorksheet = () => {
-    const content = results.map((r, i) => 
-      `Question ${i + 1}: ${r.question}\nYour Answer: ${r.userAnswer}\nCorrect Answer: ${r.actualAnswer}\nResult: ${r.correct ? 'Correct' : 'Incorrect'}\n\n`
-    ).join('');
+    const content = `
+      <html>
+        <head>
+          <title>Quiz Worksheet</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .question { margin-bottom: 20px; padding: 10px; border-bottom: 1px solid #eee; }
+            .correct { color: green; }
+            .incorrect { color: red; }
+          </style>
+        </head>
+        <body>
+          <h1>Quiz Results - ${percentage.toFixed(1)}%</h1>
+          <p>Score: ${correctCount} out of ${results.length}</p>
+          ${results.map((r, i) => `
+            <div class="question">
+              <h3>Question ${i + 1}: ${r.question}</h3>
+              <p>Your Answer: ${r.userAnswer}</p>
+              <p class="${r.correct ? 'correct' : 'incorrect'}">
+                ${r.correct ? '✓ Correct' : `✗ Incorrect - Correct answer: ${r.actualAnswer}`}
+              </p>
+            </div>
+          `).join('')}
+        </body>
+      </html>
+    `;
     
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'quiz-worksheet.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(content);
+      newWindow.document.close();
+      setTimeout(() => newWindow.print(), 500);
+    }
   };
 
   return (
@@ -68,7 +88,7 @@ export const Results = ({ onRestart }: ResultsProps) => {
       <div className="flex gap-4 justify-center mt-6">
         <Button onClick={onRestart}>Try Again</Button>
         <Button variant="outline" onClick={downloadWorksheet}>
-          Download Worksheet
+          Print Worksheet
         </Button>
       </div>
     </div>
