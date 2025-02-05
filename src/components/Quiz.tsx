@@ -37,7 +37,16 @@ export const Quiz = ({ settings, onComplete }: QuizProps) => {
 
   const handleAnswer = () => {
     const currentQuestion = questions[currentIndex];
-    const isCorrect = answer.toLowerCase().trim() === currentQuestion.answer.toLowerCase().trim();
+    
+    // Add guard clause to check if currentQuestion exists
+    if (!currentQuestion || !currentQuestion.answer) {
+      toast.error("Question or answer is missing!");
+      return;
+    }
+
+    const userAnswer = answer.toLowerCase().trim();
+    const correctAnswer = currentQuestion.answer.toLowerCase().trim();
+    const isCorrect = userAnswer === correctAnswer;
     
     if (isCorrect) {
       confetti({
